@@ -45,17 +45,10 @@ export default async (req: Request, _context: Context): Promise<Response> => {
   const method = req.method.toUpperCase();
 
   try {
-    // Public status (names and count ONLY, never scores)
+    // Public status (no voter names or counts exposed publicly)
     if (method === 'GET' && routePath === '/api/public/status') {
-      const votes = await listAllVotes();
-      const participantNames = votes
-        .slice()
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .map((v) => v.voterName);
-
       return jsonResponse({
-        totalVoters: votes.length,
-        participantNames,
+        contestOpen: true,
       });
     }
 
@@ -73,6 +66,7 @@ export default async (req: Request, _context: Context): Promise<Response> => {
           voterName?: unknown;
           zhibinScore?: unknown;
           nicolasScore?: unknown;
+          language?: unknown;
           note?: unknown;
         },
       );
@@ -88,7 +82,10 @@ export default async (req: Request, _context: Context): Promise<Response> => {
       if (existing) {
         return jsonResponse(
           {
-            error: `Ya existe una votación registrada con el nombre "${existing.voterName}". Cada participante solo puede votar una vez.`,
+            error:
+              validation.language === 'zh'
+                ? `姓名“${existing.voterName}”已经投过票了，每位参与者只能投票一次。`
+                : `Ya existe una votación registrada con el nombre "${existing.voterName}". Cada participante solo puede votar una vez.`,
           },
           409,
         );
@@ -100,17 +97,16 @@ export default async (req: Request, _context: Context): Promise<Response> => {
         normalizedName: validation.normalizedName,
         zhibinScore: validation.zhibinScore,
         nicolasScore: validation.nicolasScore,
+        language: validation.language,
         note: validation.note,
         createdAt: new Date().toISOString(),
       };
 
       await store.setJSON(key, newVote);
-      const allVotes = await listAllVotes();
 
       return jsonResponse(
         {
           vote: newVote,
-          totalVoters: allVotes.length,
         },
         201,
       );

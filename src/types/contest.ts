@@ -1,16 +1,18 @@
+export type VoteLanguage = 'es' | 'zh';
+
 export interface VoteRecord {
   id: string;
   voterName: string;
   normalizedName: string;
   zhibinScore: number;
   nicolasScore: number;
+  language?: VoteLanguage;
   note: string;
   createdAt: string;
 }
 
 export interface PublicStatusResponse {
-  totalVoters: number;
-  participantNames: string[];
+  contestOpen: boolean;
 }
 
 export interface ScoreBucket {

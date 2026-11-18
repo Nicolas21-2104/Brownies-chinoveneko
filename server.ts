@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
@@ -58,16 +59,16 @@ async function startServer(): Promise<void> {
   const app = express();
   app.use(express.json());
 
-  app.get('/api/public/status', (_req: Request, res: Response) => {
-    const votes = readVotes();
-    const participantNames = votes
-      .slice()
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .map((v) => v.voterName);
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/admin') || req.path.startsWith('/api/admin')) {
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+    next();
+  });
 
+  app.get('/api/public/status', (_req: Request, res: Response) => {
     res.json({
-      totalVoters: votes.length,
-      participantNames,
+      contestOpen: true,
     });
   });
 
@@ -77,6 +78,7 @@ async function startServer(): Promise<void> {
         voterName?: unknown;
         zhibinScore?: unknown;
         nicolasScore?: unknown;
+        language?: unknown;
         note?: unknown;
       },
     );
@@ -92,7 +94,10 @@ async function startServer(): Promise<void> {
     );
     if (duplicate) {
       res.status(409).json({
-        error: `Ya existe una votación registrada con el nombre "${duplicate.voterName}". Cada participante solo puede votar una vez.`,
+        error:
+          validation.language === 'zh'
+            ? `姓名“${duplicate.voterName}”已经投过票了，每位参与者只能投票一次。`
+            : `Ya existe una votación registrada con el nombre "${duplicate.voterName}". Cada participante solo puede votar una vez.`,
       });
       return;
     }
@@ -103,6 +108,7 @@ async function startServer(): Promise<void> {
       normalizedName: validation.normalizedName,
       zhibinScore: validation.zhibinScore,
       nicolasScore: validation.nicolasScore,
+      language: validation.language,
       note: validation.note,
       createdAt: new Date().toISOString(),
     };
@@ -112,7 +118,6 @@ async function startServer(): Promise<void> {
 
     res.status(201).json({
       vote: newVote,
-      totalVoters: updatedVotes.length,
     });
   });
 
@@ -148,10 +153,15 @@ async function startServer(): Promise<void> {
     res.json(buildAnalytics([]));
   });
 
+  const httpServer = http.createServer(app);
+
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        ws: { server: httpServer },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -163,7 +173,7 @@ async function startServer(): Promise<void> {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Brownie contest server listening on http://0.0.0.0:${PORT}`);
   });
 }

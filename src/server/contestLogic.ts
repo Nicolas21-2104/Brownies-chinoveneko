@@ -3,10 +3,12 @@ import type {
   AdminAnalyticsResponse,
   ContestantStats,
   ScoreBucket,
+  VoteLanguage,
   VoteRecord,
 } from '../types/contest.ts';
 
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234';
+export const ADMIN_PASSWORD =
+  process.env.ADMIN_PASSWORD || 'A6nje28jkako19_*][+×÷=♡♡micropene♡♡';
 
 const TOKEN_SECRET =
   process.env.ADMIN_TOKEN_SECRET ||
@@ -59,6 +61,7 @@ export function validateVoteInput(body: {
   voterName?: unknown;
   zhibinScore?: unknown;
   nicolasScore?: unknown;
+  language?: unknown;
   note?: unknown;
 }):
   | {
@@ -67,32 +70,49 @@ export function validateVoteInput(body: {
       normalizedName: string;
       zhibinScore: number;
       nicolasScore: number;
+      language: VoteLanguage;
       note: string;
     }
   | { ok: false; error: string } {
+  const language: VoteLanguage = body.language === 'zh' ? 'zh' : 'es';
   const rawName = typeof body.voterName === 'string' ? body.voterName.trim() : '';
   if (rawName.length < 2 || rawName.length > 60) {
     return {
       ok: false,
-      error: 'Por favor, introduce un nombre válido (entre 2 y 60 caracteres).',
+      error:
+        language === 'zh'
+          ? '请输入有效的姓名（至少两个字符，不超过六十个字符）。'
+          : 'Por favor, introduce un nombre válido (entre 2 y 60 caracteres).',
     };
   }
 
-  const zhibinScore = Number(body.zhibinScore);
-  const nicolasScore = Number(body.nicolasScore);
+  const rawZhibin = Number(body.zhibinScore);
+  const rawNicolas = Number(body.nicolasScore);
 
-  if (
-    !Number.isInteger(zhibinScore) ||
-    zhibinScore < 1 ||
-    zhibinScore > 10 ||
-    !Number.isInteger(nicolasScore) ||
-    nicolasScore < 1 ||
-    nicolasScore > 10
-  ) {
-    return {
-      ok: false,
-      error: 'Las puntuaciones deben ser números enteros del 1 al 10 para ambos brownies.',
-    };
+  let zhibinScore: number;
+  let nicolasScore: number;
+
+  if (language === 'zh') {
+    const isValidZh = (v: number) =>
+      Number.isInteger(v) && v >= 0 && v <= 100 && v % 10 === 0;
+    if (!isValidZh(rawZhibin) || !isValidZh(rawNicolas)) {
+      return {
+        ok: false,
+        error: '请为两款布朗尼分别选择零至一百分的评分。',
+      };
+    }
+    zhibinScore = rawZhibin / 10;
+    nicolasScore = rawNicolas / 10;
+  } else {
+    const isValidEs = (v: number) => Number.isInteger(v) && v >= 0 && v <= 10;
+    if (!isValidEs(rawZhibin) || !isValidEs(rawNicolas)) {
+      return {
+        ok: false,
+        error: 'Las puntuaciones deben ser números enteros del 0 al 10 para ambos brownies.',
+      };
+    }
+    zhibinScore = rawZhibin;
+    nicolasScore = rawNicolas;
   }
 
   const note =
@@ -104,6 +124,7 @@ export function validateVoteInput(body: {
     normalizedName: normalizeVoterName(rawName),
     zhibinScore,
     nicolasScore,
+    language,
     note,
   };
 }
@@ -122,7 +143,9 @@ export function computeStats(
   key: 'zhibin' | 'nicolas',
   name: string,
   scores: number[],
+  includeZeroBucket = false,
 ): ContestantStats {
+  const startBucket = includeZeroBucket ? 0 : 1;
   const count = scores.length;
   if (count === 0) {
     return {
@@ -144,8 +167,8 @@ export function computeStats(
       iqr: 0,
       highScoresCount: 0,
       highScoresRate: 0,
-      distribution: Array.from({ length: 10 }, (_, idx) => ({
-        score: idx + 1,
+      distribution: Array.from({ length: 11 - startBucket }, (_, idx) => ({
+        score: idx + startBucket,
         count: 0,
         percentage: 0,
       })),
@@ -161,7 +184,7 @@ export function computeStats(
   const range = max - min;
 
   const freqMap = new Map<number, number>();
-  for (let s = 1; s <= 10; s++) {
+  for (let s = startBucket; s <= 10; s++) {
     freqMap.set(s, 0);
   }
   for (const s of scores) {
@@ -174,7 +197,7 @@ export function computeStats(
   }
   const mode: number[] = [];
   if (maxFreq > 0) {
-    for (let s = 1; s <= 10; s++) {
+    for (let s = startBucket; s <= 10; s++) {
       if (freqMap.get(s) === maxFreq) {
         mode.push(s);
       }
@@ -204,15 +227,18 @@ export function computeStats(
   const highScoresCount = scores.filter((s) => s >= 8).length;
   const highScoresRate = Number(((highScoresCount / count) * 100).toFixed(1));
 
-  const distribution: ScoreBucket[] = Array.from({ length: 10 }, (_, idx) => {
-    const score = idx + 1;
-    const bucketCount = freqMap.get(score) || 0;
-    return {
-      score,
-      count: bucketCount,
-      percentage: Number(((bucketCount / count) * 100).toFixed(1)),
-    };
-  });
+  const distribution: ScoreBucket[] = Array.from(
+    { length: 11 - startBucket },
+    (_, idx) => {
+      const score = idx + startBucket;
+      const bucketCount = freqMap.get(score) || 0;
+      return {
+        score,
+        count: bucketCount,
+        percentage: Number(((bucketCount / count) * 100).toFixed(1)),
+      };
+    },
+  );
 
   return {
     key,
@@ -240,9 +266,16 @@ export function computeStats(
 export function buildAnalytics(votes: VoteRecord[]): AdminAnalyticsResponse {
   const zhibinScores = votes.map((v) => v.zhibinScore);
   const nicolasScores = votes.map((v) => v.nicolasScore);
+  const hasZero =
+    zhibinScores.some((s) => s === 0) || nicolasScores.some((s) => s === 0);
 
-  const zhibin = computeStats('zhibin', 'Zhibin Zheng', zhibinScores);
-  const nicolas = computeStats('nicolas', 'Nicolás Villegas', nicolasScores);
+  const zhibin = computeStats('zhibin', 'Zhibin Zheng', zhibinScores, hasZero);
+  const nicolas = computeStats(
+    'nicolas',
+    'Nicolás Villegas',
+    nicolasScores,
+    hasZero,
+  );
 
   let leader: 'zhibin' | 'nicolas' | 'tie' | 'none' = 'none';
   if (votes.length > 0) {

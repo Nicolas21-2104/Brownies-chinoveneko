@@ -11,6 +11,17 @@ import {
   Trash2,
   Trophy,
 } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import type { AdminAnalyticsResponse, VoteRecord } from '../types/contest';
 
 const TOKEN_STORAGE_KEY = 'brownie_admin_token';
@@ -44,6 +55,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState(false);
+  const [showAllRecent, setShowAllRecent] = useState(false);
 
   const loadAnalytics = useCallback(async (activeToken: string) => {
     setLoadingData(true);
@@ -222,6 +234,43 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
       }
     });
   }, [analytics, searchQuery, sortBy]);
+
+  const averageChartData = useMemo(() => {
+    if (!analytics) return [];
+    return [
+      {
+        name: 'Zhibin Zheng',
+        promedio: analytics.zhibin.mean,
+        mediana: analytics.zhibin.median,
+        totalPoints: analytics.zhibin.totalPoints,
+        count: analytics.zhibin.count,
+        fill: '#7C3A1D',
+      },
+      {
+        name: 'Nicolás Villegas',
+        promedio: analytics.nicolas.mean,
+        mediana: analytics.nicolas.median,
+        totalPoints: analytics.nicolas.totalPoints,
+        count: analytics.nicolas.count,
+        fill: '#1C1613',
+      },
+    ];
+  }, [analytics]);
+
+  const recentVotes = useMemo<VoteRecord[]>(() => {
+    if (!analytics) return [];
+    const sortedNewest = [...analytics.votes].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+    return showAllRecent ? sortedNewest : sortedNewest.slice(0, 8);
+  }, [analytics, showAllRecent]);
+
+  const overallMean = useMemo(() => {
+    if (!analytics || analytics.totalVoters === 0) return 0;
+    const totalSum =
+      analytics.zhibin.totalPoints + analytics.nicolas.totalPoints;
+    return Number((totalSum / (analytics.totalVoters * 2)).toFixed(2));
+  }, [analytics]);
 
   // Password Gate View
   if (!token) {
@@ -415,6 +464,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
 
       {loadingData && !analytics ? (
         <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-28 rounded-xl bg-[#EFEAE2] animate-pulse" />
+            <div className="h-28 rounded-xl bg-[#EFEAE2] animate-pulse" />
+            <div className="h-28 rounded-xl bg-[#EFEAE2] animate-pulse" />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="h-44 rounded-xl bg-[#EFEAE2] animate-pulse" />
             <div className="h-44 rounded-xl bg-[#EFEAE2] animate-pulse" />
@@ -444,6 +498,55 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
       ) : (
         analytics && (
           <>
+            {/* Summary KPI Cards */}
+            <section
+              aria-label="Resumen general del concurso"
+              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            >
+              <div className="bg-white border border-[#E7E2DA] rounded-xl p-6 space-y-2">
+                <p className="text-xs font-medium text-[#8A7E75]">
+                  Total de votantes
+                </p>
+                <p className="font-mono text-3xl font-semibold tabular-nums text-[#1C1613]">
+                  {analytics.totalVoters}
+                </p>
+                <p className="text-xs text-[#5C524B] font-mono tabular-nums">
+                  {analytics.totalVoters * 2} puntuaciones registradas
+                </p>
+              </div>
+
+              <div className="bg-white border border-[#E7E2DA] rounded-xl p-6 space-y-2">
+                <p className="text-xs font-medium text-[#8A7E75]">
+                  Puntuación media general
+                </p>
+                <p className="font-mono text-3xl font-semibold tabular-nums text-[#1C1613]">
+                  {overallMean.toFixed(2)}
+                  <span className="text-sm font-normal text-[#8A7E75]"> / 10</span>
+                </p>
+                <p className="text-xs text-[#5C524B] font-mono tabular-nums">
+                  Zhibin {analytics.zhibin.mean.toFixed(2)} · Nicolás{' '}
+                  {analytics.nicolas.mean.toFixed(2)}
+                </p>
+              </div>
+
+              <div className="bg-white border border-[#E7E2DA] rounded-xl p-6 space-y-2">
+                <p className="text-xs font-medium text-[#8A7E75]">
+                  Diferencia de puntos
+                </p>
+                <p className="font-mono text-3xl font-semibold tabular-nums text-[#1C1613]">
+                  {analytics.comparison.pointsDiff}
+                  <span className="text-sm font-normal text-[#8A7E75]"> pts</span>
+                </p>
+                <p className="text-xs text-[#5C524B]">
+                  {analytics.comparison.leader === 'zhibin'
+                    ? 'Ventaja para Zhibin Zheng'
+                    : analytics.comparison.leader === 'nicolas'
+                      ? 'Ventaja para Nicolás Villegas'
+                      : 'Empate técnico actual'}
+                </p>
+              </div>
+            </section>
+
             {/* Leader Banner & Head-to-Head Totals */}
             <section className="space-y-4">
               <div className="bg-white border border-[#E7E2DA] rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -552,6 +655,117 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            {/* Recharts Comparative Average Bar Chart */}
+            <section className="bg-white border border-[#E7E2DA] rounded-xl p-6 space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-semibold text-[#1C1613]">
+                    Comparativa de puntuación promedio
+                  </h2>
+                  <p className="text-xs text-[#5C524B]">
+                    Media aritmética sobre una escala del 0 al 10 para cada brownie
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-5 text-xs text-[#1C1613]">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-sm bg-[#7C3A1D]" aria-hidden="true" />
+                    <span>Zhibin Zheng ({analytics.zhibin.mean.toFixed(2)})</span>
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-sm bg-[#1C1613]" aria-hidden="true" />
+                    <span>Nicolás Villegas ({analytics.nicolas.mean.toFixed(2)})</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="w-full h-72 pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={averageChartData}
+                    margin={{ top: 24, right: 24, left: 0, bottom: 8 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#EFEAE2"
+                    />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={{ stroke: '#E7E2DA' }}
+                      tickLine={false}
+                      tick={{ fill: '#1C1613', fontSize: 13, fontWeight: 500 }}
+                    />
+                    <YAxis
+                      domain={[0, 10]}
+                      ticks={[0, 2, 4, 6, 8, 10]}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#5C524B', fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}
+                      width={36}
+                    />
+                    <Tooltip
+                      cursor={{ fill: '#FAF8F5' }}
+                      content={({ active, payload }) => {
+                        if (!active || !payload || payload.length === 0) {
+                          return null;
+                        }
+                        const item = payload[0].payload as {
+                          name: string;
+                          promedio: number;
+                          mediana: number;
+                          totalPoints: number;
+                          count: number;
+                        };
+                        return (
+                          <div className="bg-white border border-[#E7E2DA] rounded-lg px-3.5 py-2.5 shadow-sm text-xs space-y-1">
+                            <p className="font-semibold text-[#1C1613]">{item.name}</p>
+                            <p className="font-mono tabular-nums text-[#5C524B]">
+                              Promedio:{' '}
+                              <strong className="text-[#1C1613]">
+                                {item.promedio.toFixed(2)} / 10
+                              </strong>
+                            </p>
+                            <p className="font-mono tabular-nums text-[#5C524B]">
+                              Mediana:{' '}
+                              <strong className="text-[#1C1613]">
+                                {item.mediana.toFixed(2)}
+                              </strong>
+                            </p>
+                            <p className="font-mono tabular-nums text-[#5C524B]">
+                              Total:{' '}
+                              <strong className="text-[#1C1613]">
+                                {item.totalPoints} pts ({item.count}{' '}
+                                {item.count === 1 ? 'voto' : 'votos'})
+                              </strong>
+                            </p>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Bar dataKey="promedio" radius={[8, 8, 0, 0]} maxBarSize={110}>
+                      {averageChartData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.fill} />
+                      ))}
+                      <LabelList
+                        dataKey="promedio"
+                        position="top"
+                        formatter={(value: unknown) =>
+                          typeof value === 'number' ? value.toFixed(2) : String(value ?? '')
+                        }
+                        style={{
+                          fill: '#1C1613',
+                          fontSize: 13,
+                          fontWeight: 600,
+                          fontFamily: 'JetBrains Mono, monospace',
+                        }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </section>
 
@@ -673,10 +887,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h2 className="font-display text-lg font-semibold text-[#1C1613]">
-                    Distribución de notas (1 a 10)
+                    Distribución de notas ({analytics.zhibin.distribution[0]?.score === 0 ? '0 a 10' : '1 a 10'})
                   </h2>
                   <p className="text-xs text-[#5C524B]">
-                    Frecuencia exacta de cada puntuación otorgada por los catadores
+                    Frecuencia exacta de cada puntuación (normalizada a escala 0–10)
                   </p>
                 </div>
 
@@ -692,10 +906,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-5 sm:grid-cols-10 gap-3 pt-2">
-                {Array.from({ length: 10 }, (_, idx) => {
-                  const score = idx + 1;
-                  const zBucket = analytics.zhibin.distribution[idx];
+              <div
+                className={`grid grid-cols-5 gap-3 pt-2 ${
+                  analytics.zhibin.distribution.length === 11
+                    ? 'sm:grid-cols-11'
+                    : 'sm:grid-cols-10'
+                }`}
+              >
+                {analytics.zhibin.distribution.map((zBucket, idx) => {
+                  const score = zBucket.score;
                   const nBucket = analytics.nicolas.distribution[idx];
                   const zHeight = Math.round((zBucket.count / maxBucketCount) * 100);
                   const nHeight = Math.round((nBucket.count / maxBucketCount) * 100);
@@ -740,6 +959,134 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
                   );
                 })}
               </div>
+            </section>
+
+            {/* Recent Votes History List */}
+            <section
+              aria-label="Historial reciente de votos"
+              className="bg-white border border-[#E7E2DA] rounded-xl overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-[#E7E2DA] flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-semibold text-[#1C1613]">
+                    Historial reciente de votos
+                  </h2>
+                  <p className="text-xs text-[#5C524B]">
+                    Últimas papeletas registradas en orden cronológico inverso
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <span className="font-mono text-xs tabular-nums text-[#8A7E75]">
+                    Mostrando {recentVotes.length} de {analytics.totalVoters}
+                  </span>
+                  {analytics.totalVoters > 8 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllRecent((prev) => !prev)}
+                      className="text-xs font-medium text-[#7C3A1D] hover:text-[#1C1613] hover:underline underline-offset-4 cursor-pointer whitespace-nowrap"
+                    >
+                      {showAllRecent
+                        ? 'Mostrar últimos 8'
+                        : `Ver todos (${analytics.totalVoters})`}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <ul className="divide-y divide-[#F0ECE4]">
+                {recentVotes.map((vote) => {
+                  const formattedTime = new Date(vote.createdAt).toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  const diff = vote.zhibinScore - vote.nicolasScore;
+                  const preferenceText =
+                    diff > 0
+                      ? `+${diff} para Zhibin`
+                      : diff < 0
+                        ? `+${Math.abs(diff)} para Nicolás`
+                        : 'Empate';
+
+                  return (
+                    <li
+                      key={`recent-${vote.id}`}
+                      className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#FAF8F5]/70 transition-colors"
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                          <span className="text-sm font-semibold text-[#1C1613]">
+                            {vote.voterName}
+                          </span>
+                          <span className="text-xs text-[#8A7E75]" aria-hidden="true">
+                            ·
+                          </span>
+                          <time
+                            dateTime={vote.createdAt}
+                            className="font-mono text-xs tabular-nums text-[#8A7E75]"
+                          >
+                            {formattedTime}
+                          </time>
+                          <span className="text-xs text-[#8A7E75]" aria-hidden="true">
+                            ·
+                          </span>
+                          <span className="text-xs text-[#5C524B]">{preferenceText}</span>
+                          {vote.language === 'zh' && (
+                            <>
+                              <span className="text-xs text-[#8A7E75]" aria-hidden="true">
+                                ·
+                              </span>
+                              <span className="text-xs text-[#8A7E75]">
+                                中文 0-100
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {vote.note && (
+                          <p className="text-xs text-[#5C524B] truncate max-w-2xl">
+                            {vote.note}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-6 shrink-0 font-mono text-sm tabular-nums">
+                        <div className="text-right">
+                          <span className="block text-[11px] font-sans text-[#8A7E75]">
+                            Zhibin Zheng
+                          </span>
+                          <span className="font-semibold text-[#7C3A1D]">
+                            {vote.zhibinScore} / 10
+                            {vote.language === 'zh' && (
+                              <span className="text-xs font-normal text-[#8A7E75]">
+                                {' '}
+                                ({vote.zhibinScore * 10})
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="h-6 w-px bg-[#E7E2DA]" aria-hidden="true" />
+                        <div className="text-right">
+                          <span className="block text-[11px] font-sans text-[#8A7E75]">
+                            Nicolás Villegas
+                          </span>
+                          <span className="font-semibold text-[#1C1613]">
+                            {vote.nicolasScore} / 10
+                            {vote.language === 'zh' && (
+                              <span className="text-xs font-normal text-[#8A7E75]">
+                                {' '}
+                                ({vote.nicolasScore * 10})
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             </section>
 
             {/* Full Votes Ledger */}
@@ -837,9 +1184,21 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
                             </td>
                             <td className="py-3 px-4 text-right font-mono font-semibold tabular-nums text-[#7C3A1D]">
                               {vote.zhibinScore}
+                              {vote.language === 'zh' && (
+                                <span className="text-xs font-normal text-[#8A7E75]">
+                                  {' '}
+                                  ({vote.zhibinScore * 10})
+                                </span>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-right font-mono font-semibold tabular-nums text-[#1C1613]">
                               {vote.nicolasScore}
+                              {vote.language === 'zh' && (
+                                <span className="text-xs font-normal text-[#8A7E75]">
+                                  {' '}
+                                  ({vote.nicolasScore * 10})
+                                </span>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-right font-mono text-xs tabular-nums text-[#5C524B] whitespace-nowrap">
                               {diffText}
