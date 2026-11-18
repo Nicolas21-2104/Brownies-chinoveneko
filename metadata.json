@@ -1,0 +1,6 @@
+{
+  "name": "Concurso de Brownies",
+  "description": "Plataforma de votación ciega y panel de estadísticas para el concurso de brownies entre Zhibin Zheng y Nicolás Villegas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
