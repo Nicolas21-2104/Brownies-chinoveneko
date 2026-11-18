@@ -6,6 +6,7 @@ import type {
   VoteLanguage,
   VoteRecord,
 } from '../types/contest.ts';
+import { buildHypothesisAnalysis } from './statisticalTests.ts';
 
 export const ADMIN_PASSWORD =
   process.env.ADMIN_PASSWORD || 'A6nje28jkako19_*][+×÷=♡♡micropene♡♡';
@@ -315,6 +316,7 @@ export function buildAnalytics(votes: VoteRecord[]): AdminAnalyticsResponse {
       nicolasWinsCount,
       tiesCount,
     },
+    hypothesis: buildHypothesisAnalysis(votes),
     votes: sortedVotes,
   };
 }

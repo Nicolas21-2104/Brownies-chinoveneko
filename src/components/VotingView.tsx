@@ -4,6 +4,10 @@ import { ContestantCard, formatChineseScore } from './ContestantCard';
 import { DancingSkeleton } from './DancingSkeleton';
 import { BrownieConfetti } from './BrownieConfetti';
 import {
+  ChineseLanternPair,
+  VenezuelanCriolloCrest,
+} from './CulturalOrnaments';
+import {
   isSfxMuted,
   setSfxMuted as persistSfxMuted,
   playImperialEntryGong,
@@ -97,8 +101,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
       else playSpanishErrorSfx();
       setErrorMsg(
         isZh
-          ? '请输入你的姓名（至少两个字符）以完成登记。'
-          : 'Introduce tu nombre completo (al menos 2 caracteres) para registrarte.',
+          ? '请先在生死状上填好你的尊姓大名（至少两个汉字或字符）。'
+          : '¡Epa chamo! Pon tu nombre completo (mínimo 2 letras) pa’ anotarte en la rumba.',
       );
       return;
     }
@@ -107,8 +111,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
       else playSpanishErrorSfx();
       setErrorMsg(
         isZh
-          ? '提交前请先为两款布朗尼分别打分。'
-          : 'Debes asignar una nota a ambos brownies antes de enviar.',
+          ? '大厨的布朗尼还没打完分呢！请先为两款御膳分别打分。'
+          : '¡Aguanta el carro, vale! Tienes que darle nota a los dos brownies antes de mandar el voto.',
       );
       return;
     }
@@ -138,8 +142,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
         setErrorMsg(
           payload.error ||
             (isZh
-              ? '无法保存你的投票，请重试。'
-              : 'No se pudo registrar tu voto. Inténtalo de nuevo.'),
+              ? '飞鸽传书半路迷路了，请再点一次呈递！'
+              : '¡Qué vaina! No se pudo guardar tu voto, échale bola otra vez.'),
         );
         return;
       }
@@ -159,8 +163,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
       else playSpanishErrorSfx();
       setErrorMsg(
         isZh
-          ? '服务器连接失败，请检查网络后重试。'
-          : 'Error de conexión con el servidor. Comprueba tu red e inténtalo otra vez.',
+          ? '驿站服务器断线了，请检查网络后再试。'
+          : 'Se fue la luz en el servidor, mi pana. Revisa tu conexión e inténtalo de nuevo.',
       );
     } finally {
       setSubmitting(false);
@@ -177,11 +181,17 @@ export const VotingView: React.FC<VotingViewProps> = ({
               isZh ? 'text-[#D99B26]' : 'text-[#5C524B]'
             }`}
           >
-            <span>{isZh ? '御膳手工烘焙品鉴赛' : 'Edición Cata Artesanal'}</span>
+            <span>
+              {isZh ? '御赐金牌老字号' : 'Cacao de Chuao puro'}
+            </span>
             <span aria-hidden="true">·</span>
-            <span>{isZh ? '零至一百分制' : 'Escala 0 a 10'}</span>
+            <span>
+              {isZh ? '功夫烘焙 · 零至一百分制' : 'Escala criolla del 0 al 10'}
+            </span>
             <span aria-hidden="true">·</span>
-            <span>{isZh ? '全程保密计票' : 'Recuento secreto hasta el final'}</span>
+            <span>
+              {isZh ? '算盘保密计分' : 'Cero bochinche hasta el final'}
+            </span>
           </div>
 
           <h1
@@ -191,8 +201,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
             style={isZh ? { fontFamily: '"Noto Serif SC", serif' } : undefined}
           >
             {isZh
-              ? '布朗尼品鉴大典：郑志斌 对决 尼古拉斯·维列加斯'
-              : 'Concurso de Brownies: Zhibin Zheng vs. Nicolás Villegas'}
+              ? '紫禁城御膳布朗尼比武大会：郑志斌 决战 尼古拉斯·维列加斯'
+              : 'Guerra Criolla de Brownies: Zhibin Zheng vs. Nicolás Villegas'}
           </h1>
 
           <p
@@ -201,116 +211,127 @@ export const VotingView: React.FC<VotingViewProps> = ({
             }`}
           >
             {isZh
-              ? '请填写你的尊姓大名，并用零至一百分为两位糕点师的布朗尼打分。总分全程封存保密，直至盛会落幕。'
-              : 'Regístrate con tu nombre y califica del 0 al 10 cada elaboración. El acumulado total de puntos permanece oculto hasta el cierre del concurso.'}
+              ? '各位食客吃了没有？速速报上名号，用太极玄功与祖传算盘，以零至一百分评判两位大厨的秘制布朗尼！账房先生已封锁全部分数，敲锣开榜前谁敢偷看拖出去打五十大板！'
+              : '¡Épale, mi pana! Anótate con tu nombre completo y evalúa del 0 al 10 qué brownie está más brutal y cuál quedó más chimbón. Los puntos quedan trancados bajo llave hasta que se prenda el beta al final.'}
           </p>
         </div>
 
-        {/* Language control: in ES shows button to switch to Chinese; in ZH shows pure Chinese gate requiring Chinese literacy */}
+        {/* Language control + Cultural emblem */}
         <div className="shrink-0 self-start">
           {!isZh ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleToggleSfx}
-                aria-pressed={!sfxMuted}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#5C524B] bg-white border border-[#D8D0C5] hover:bg-[#EFEAE2] rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
-              >
-                {sfxMuted ? (
-                  <VolumeX className="w-3.5 h-3.5" aria-hidden="true" />
-                ) : (
-                  <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
-                )}
-                <span>{sfxMuted ? 'Sonido: OFF' : 'Sonido: ON'}</span>
-              </button>
+            <div className="flex flex-col items-start lg:items-end gap-3.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleToggleSfx}
+                  aria-pressed={!sfxMuted}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#5C524B] bg-[#FFFDF8] border border-[#DFD5BE] hover:bg-[#F4EBD7] rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  {sfxMuted ? (
+                    <VolumeX className="w-3.5 h-3.5" aria-hidden="true" />
+                  ) : (
+                    <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  )}
+                  <span>{sfxMuted ? 'Sonido: OFF' : 'Sonido: ON'}</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={handleSwitchToChinese}
-                className="px-4 py-2 text-xs font-semibold text-[#1C1613] bg-white border border-[#D8D0C5] hover:bg-[#EFEAE2] rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
-              >
-                Cambiar a 中文 (0-100)
-              </button>
+                <button
+                  type="button"
+                  onClick={handleSwitchToChinese}
+                  className="px-4 py-2 text-xs font-semibold text-[#1C1613] bg-[#FFFDF8] border border-[#DFD5BE] hover:bg-[#F4EBD7] rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  Cambiar a 中文 (0-100)
+                </button>
+              </div>
+
+              <VenezuelanCriolloCrest />
             </div>
           ) : (
             <div className="flex flex-col items-start lg:items-end gap-4">
-              <div className="flex flex-col items-start lg:items-end gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleToggleSfx}
-                    aria-pressed={!sfxMuted}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#E5B85C] bg-[#271210] border border-[#D99B26]/35 hover:bg-[#3A1B18] rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                  >
-                    {sfxMuted ? (
-                      <VolumeX className="w-3.5 h-3.5" aria-hidden="true" />
-                    ) : (
-                      <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    )}
-                    <span>{sfxMuted ? '音效：静音' : '音效：开启'}</span>
-                  </button>
+              <div className="flex items-start gap-4">
+                <ChineseLanternPair />
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!showRestorePrompt) {
-                        playChineseTrapWarning();
-                      }
-                      setShowRestorePrompt((prev) => !prev);
-                      setRestoreError(false);
-                    }}
-                    className="px-3.5 py-2 text-xs font-medium text-[#E5B85C] bg-[#271210] border border-[#D99B26]/35 hover:bg-[#3A1B18] rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                  >
-                    切换为西班牙语
-                  </button>
-                </div>
-
-                {showRestorePrompt && (
-                  <form
-                    onSubmit={handleRestoreSpanish}
-                    className="bg-[#271210] border border-[#D99B26]/40 rounded-lg p-3 w-64 space-y-2.5 shadow-lg"
-                  >
-                    <label
-                      htmlFor="restore-lang-input"
-                      className="block text-xs text-[#F9EEDB]"
+                <div className="flex flex-col items-start lg:items-end gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleToggleSfx}
+                      aria-pressed={!sfxMuted}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#E5B85C] bg-[#2A0B0B] border border-[#D99B26]/45 hover:bg-[#3F1212] rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
                     >
-                      语言验证：请输入“西班牙语”确认切换
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="restore-lang-input"
-                        type="text"
-                        value={restoreInput}
-                        onChange={(e) => {
-                          setRestoreInput(e.target.value);
-                          if (restoreError) setRestoreError(false);
-                        }}
-                        placeholder="在此输入汉字"
-                        className="flex-1 min-w-0 h-8 px-2.5 rounded bg-[#1B0C0B] border border-[#D99B26]/35 text-xs text-[#F9EEDB] placeholder:text-[#9C8461] focus:outline-none focus:ring-1 focus:ring-[#E5B85C]"
-                      />
-                      <button
-                        type="submit"
-                        className="h-8 px-3 rounded bg-[#B91C1C] hover:bg-[#991B1B] text-xs font-medium text-[#F9EEDB] cursor-pointer whitespace-nowrap"
+                      {sfxMuted ? (
+                        <VolumeX className="w-3.5 h-3.5" aria-hidden="true" />
+                      ) : (
+                        <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      )}
+                      <span>{sfxMuted ? '音效：静音' : '音效：开启'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!showRestorePrompt) {
+                          playChineseTrapWarning();
+                        }
+                        setShowRestorePrompt((prev) => !prev);
+                        setRestoreError(false);
+                      }}
+                      className="px-3.5 py-2 text-xs font-medium text-[#E5B85C] bg-[#2A0B0B] border border-[#D99B26]/45 hover:bg-[#3F1212] rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    >
+                      切换为西班牙语
+                    </button>
+                  </div>
+
+                  {showRestorePrompt && (
+                    <form
+                      onSubmit={handleRestoreSpanish}
+                      className="bg-[#2A0B0B] border border-[#D99B26]/50 rounded-lg p-3 w-64 space-y-2.5 shadow-lg"
+                    >
+                      <label
+                        htmlFor="restore-lang-input"
+                        className="block text-xs text-[#F9EEDB]"
                       >
-                        确认
-                      </button>
-                    </div>
-                    {restoreError && (
-                      <p className="text-[11px] text-[#FCA5A5]">
-                        口令不符，未能通过中文验证。
-                      </p>
-                    )}
-                  </form>
-                )}
+                        通关文牒：请输入“西班牙语”方可出关
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          id="restore-lang-input"
+                          type="text"
+                          value={restoreInput}
+                          onChange={(e) => {
+                            setRestoreInput(e.target.value);
+                            if (restoreError) setRestoreError(false);
+                          }}
+                          placeholder="在此输入汉字"
+                          className="flex-1 min-w-0 h-8 px-2.5 rounded bg-[#180505] border border-[#D99B26]/40 text-xs text-[#F9EEDB] placeholder:text-[#9C8461] focus:outline-none focus:ring-1 focus:ring-[#E5B85C]"
+                        />
+                        <button
+                          type="submit"
+                          className="h-8 px-3 rounded bg-[#B91C1C] hover:bg-[#991B1B] text-xs font-medium text-[#F9EEDB] cursor-pointer whitespace-nowrap"
+                        >
+                          盖章
+                        </button>
+                      </div>
+                      {restoreError && (
+                        <p className="text-[11px] text-[#FCA5A5]">
+                          口令不对！锦衣卫拦下你了，老实留在中文区打分吧！
+                        </p>
+                      )}
+                    </form>
+                  )}
+                </div>
               </div>
 
-              <div className="w-64 sm:w-72 rounded-xl overflow-hidden bg-white border border-[#D99B26]/60 shadow-sm">
+              <div className="w-64 sm:w-72 rounded-xl overflow-hidden bg-white border-2 border-[#D99B26]/70 shadow-sm">
                 <img
                   src="/assets/aistudio/image_58a958bd.png"
                   alt="御膳红龙图腾"
                   referrerPolicy="no-referrer"
                   className="w-full aspect-[3/2] object-cover object-center block"
                 />
+                <div className="bg-[#2A0B0B] border-t border-[#D99B26]/40 px-3 py-1.5 text-center text-[11px] tracking-widest text-[#F6DCA8]">
+                  龙腾四海 · 招财进宝 · 恭喜发财
+                </div>
               </div>
             </div>
           )}
@@ -419,10 +440,10 @@ export const VotingView: React.FC<VotingViewProps> = ({
             <div
               className={`rounded-xl p-6 sm:p-10 max-w-2xl space-y-6 ${
                 isZh
-                  ? 'bg-[#271210] border border-[#D99B26]/35 text-[#F9EEDB]'
-                  : 'bg-white border border-[#E7E2DA] text-[#1C1613]'
-              }`}
-            >
+                ? 'bg-[#2A0B0B] border border-[#D99B26]/45 text-[#F9EEDB]'
+                : 'bg-[#FFFDF8] border border-[#E7DEC8] text-[#1C1613]'
+            }`}
+          >
             <div className="flex flex-col sm:flex-row sm:items-center gap-6">
               <div className="shrink-0 pt-2">
                 <DancingSkeleton
@@ -446,8 +467,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
                     style={isZh ? { fontFamily: '"Noto Serif SC", serif' } : undefined}
                   >
                     {isZh
-                      ? `感谢赐票，${submittedReceipt.voterName}！`
-                      : `¡Gracias por votar, ${submittedReceipt.voterName}!`}
+                      ? `大吉大利！多谢 ${submittedReceipt.voterName} 大侠赐票！`
+                      : `¡Qué molleja, gracias por votar, ${submittedReceipt.voterName}!`}
                   </h2>
                 </div>
                 <p
@@ -456,15 +477,15 @@ export const VotingView: React.FC<VotingViewProps> = ({
                   }`}
                 >
                   {isZh
-                    ? '你的宝贵评分已妥善封存。最终结果全程保密，直到品鉴会结束揭晓。'
-                    : 'Tu valoración ha quedado registrada en el concurso. Los resultados finales se mantendrán secretos hasta el cierre.'}
+                    ? '你的评分已由账房先生用金算盘妥善封存，红灯笼高挂之前绝不泄密。祝你恭喜发财、万事如意、多吃不胖！'
+                    : '¡Listo el pollo, mi pana! Tu voto quedó trancado en la bóveda secreta. Nadie va a sapear los puntos hasta el gran final.'}
                 </p>
               </div>
             </div>
 
             <div
               className={`border-t pt-5 grid grid-cols-1 sm:grid-cols-2 gap-6 ${
-                isZh ? 'border-[#D99B26]/25' : 'border-[#EFEAE2]'
+                isZh ? 'border-[#D99B26]/25' : 'border-[#EFE7D6]'
               }`}
             >
               <div>
@@ -473,7 +494,7 @@ export const VotingView: React.FC<VotingViewProps> = ({
                     isZh ? 'text-[#C9B086]' : 'text-[#8A7E75]'
                   }`}
                 >
-                  {isZh ? '郑志斌的布朗尼' : 'Brownie de Zhibin Zheng'}
+                  {isZh ? '郑志斌大厨的功夫布朗尼' : 'Brownie de Zhibin Zheng'}
                 </p>
                 <p
                   className={`text-2xl font-semibold ${
@@ -495,7 +516,7 @@ export const VotingView: React.FC<VotingViewProps> = ({
                     isZh ? 'text-[#C9B086]' : 'text-[#8A7E75]'
                   }`}
                 >
-                  {isZh ? '尼古拉斯·维列加斯的布朗尼' : 'Brownie de Nicolás Villegas'}
+                  {isZh ? '尼古拉斯大厨的御膳布朗尼' : 'Brownie de Nicolás Villegas'}
                 </p>
                 <p
                   className={`text-2xl font-semibold ${
@@ -518,7 +539,7 @@ export const VotingView: React.FC<VotingViewProps> = ({
                 className={`text-sm pt-2 border-t ${
                   isZh
                     ? 'text-[#E0CCA8] border-[#D99B26]/25'
-                    : 'text-[#5C524B] border-[#EFEAE2]'
+                    : 'text-[#5C524B] border-[#EFE7D6]'
                 }`}
               >
                 <span
@@ -526,7 +547,7 @@ export const VotingView: React.FC<VotingViewProps> = ({
                     isZh ? 'text-[#F9EEDB]' : 'text-[#1C1613]'
                   }`}
                 >
-                  {isZh ? '你的品鉴评语：' : 'Tu comentario: '}
+                  {isZh ? '你的江湖御评：' : 'Tu chisme de cata: '}
                 </span>
                 {submittedReceipt.note}
               </p>
@@ -539,8 +560,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
             <div
               className={`rounded-xl p-6 sm:p-8 transition-colors duration-300 ${
                 isZh
-                  ? 'bg-[#271210] border border-[#D99B26]/35'
-                  : 'bg-white border border-[#E7E2DA]'
+                  ? 'bg-[#2A0B0B] border border-[#D99B26]/45'
+                  : 'bg-[#FFFDF8] border border-[#E7DEC8]'
               }`}
             >
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
@@ -552,8 +573,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
                     }`}
                   >
                     {isZh
-                      ? '一、品鉴官登记（姓名）'
-                      : '1. Registro del catador (Nombre completo)'}
+                      ? '一、御前实名画押（姓名）'
+                      : '1. Anótate en la lista, chamo (Nombre completo)'}
                   </label>
                   <input
                     id="voter-name"
@@ -565,11 +586,11 @@ export const VotingView: React.FC<VotingViewProps> = ({
                       setVoterName(e.target.value);
                       if (errorMsg) setErrorMsg(null);
                     }}
-                    placeholder={isZh ? '例如：张伟' : 'Ej. María López'}
+                    placeholder={isZh ? '例如：李小龙 或 王富贵' : 'Ej. Yorbelys Mendoza'}
                     className={`w-full h-11 px-4 rounded-lg border text-base focus:outline-none focus:ring-2 transition-colors ${
                       isZh
-                        ? 'bg-[#1B0C0B] border-[#D99B26]/35 text-[#F9EEDB] placeholder:text-[#9C8461] focus:ring-[#E5B85C] focus:border-[#E5B85C]'
-                        : 'bg-[#FAF8F5] border-[#D8D0C5] text-[#1C1613] placeholder:text-[#9A8F86] focus:ring-[#7C3A1D] focus:border-[#7C3A1D]'
+                        ? 'bg-[#180505] border-[#D99B26]/40 text-[#F9EEDB] placeholder:text-[#9C8461] focus:ring-[#E5B85C] focus:border-[#E5B85C]'
+                        : 'bg-[#FFFBF2] border-[#DFD5BE] text-[#1C1613] placeholder:text-[#9A8F86] focus:ring-[#003893] focus:border-[#003893]'
                     }`}
                   />
                 </div>
@@ -579,8 +600,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
                   }`}
                 >
                   {isZh
-                    ? '每位宾客仅限以本人姓名提交一份评分表，系统会自动拦截重复投票。'
-                    : 'Cada persona puede emitir una única papeleta con su nombre. Si ya votaste, el sistema evitará duplicados.'}
+                    ? '一人一票，算盘记账清清楚楚。谁敢用假名重复投票，直接罚刷酒楼一千个盘子！'
+                    : 'Un solo voto por pana, sin trampas ni votos dobles como en cadena nacional; si ya votaste, el sistema te pilla de una.'}
                 </div>
               </div>
             </div>
@@ -593,24 +614,24 @@ export const VotingView: React.FC<VotingViewProps> = ({
                 }`}
               >
                 {isZh
-                  ? '二、为两款布朗尼打分（零至一百分）'
-                  : '2. Puntúa ambos brownies del 0 al 10'}
+                  ? '二、施展品鉴神功打分（零至一百分）'
+                  : '2. Suelta la nota del 0 al 10, sin miedo al éxito'}
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                 <ContestantCard
                   indexLabel={
-                    isZh ? '参赛者甲 · 手工烘焙' : 'Participante 01 · Elaboración artesanal'
+                    isZh ? '一号大厨 · 少林寺功夫秘方' : 'Pana 01 · Cacao de Chuao'
                   }
                   bakerName={isZh ? '郑志斌' : 'Zhibin Zheng'}
                   subtitle={
                     isZh
-                      ? '请从烘焙火候、可可浓郁度、内部湿润口感以及整体风味平衡度进行品评。'
-                      : 'Valora el punto de horneado, la intensidad del chocolate, la textura interior y el equilibrio de sabores.'
+                      ? '讲究外焦里嫩、可可内功深厚，一口下去仿佛看见长城与大熊猫，请凭良心挥毫打分。'
+                      : 'Evalúa si está bien melcochudo por dentro, con sabor a cacao venezolano de verdad y no a puro polvo chimbo.'
                   }
                   imageUrl="/src/assets/images/brownie_zhibin_1794987824069.jpg"
                   imageAlt={
                     isZh
-                      ? '郑志斌手工制作的黑巧克力布朗尼'
+                      ? '郑志斌大厨手工秘制的功夫黑巧布朗尼'
                       : 'Brownie artesanal de chocolate negro preparado por Zhibin Zheng'
                   }
                   score={zhibinScore}
@@ -626,18 +647,18 @@ export const VotingView: React.FC<VotingViewProps> = ({
 
                 <ContestantCard
                   indexLabel={
-                    isZh ? '参赛者乙 · 手工烘焙' : 'Participante 02 · Elaboración artesanal'
+                    isZh ? '二号大厨 · 满汉全席特供' : 'Pana 02 · Sabor de la casa'
                   }
                   bakerName={isZh ? '尼古拉斯·维列加斯' : 'Nicolás Villegas'}
                   subtitle={
                     isZh
-                      ? '请从夹心绵密口感、表皮脆度、可可香气以及品尝后的整体印象进行评分。'
-                      : 'Evalúa la cremosidad del centro, la corteza, el aroma a cacao y la impresión general tras la degustación.'
+                      ? '融合百年老汤般的丝滑夹心与金箔般酥脆表皮，请用祖传算盘仔细掂量火候与回甘。'
+                      : 'Chequea la cremosidad del centro, la costrica crujiente, el aroma a cacao criollo y si provoca bajárselo con una malta bien fría.'
                   }
                   imageUrl="/src/assets/images/brownie_nicolas_1794987824267.jpg"
                   imageAlt={
                     isZh
-                      ? '尼古拉斯·维列加斯手工制作的甘纳许布朗尼'
+                      ? '尼古拉斯·维列加斯大厨秘制的满汉全席甘纳许布朗尼'
                       : 'Brownie artesanal con cobertura de chocolate preparado por Nicolás Villegas'
                   }
                   score={nicolasScore}
@@ -657,8 +678,8 @@ export const VotingView: React.FC<VotingViewProps> = ({
             <div
               className={`rounded-xl p-6 sm:p-8 space-y-6 transition-colors duration-300 ${
                 isZh
-                  ? 'bg-[#271210] border border-[#D99B26]/35'
-                  : 'bg-white border border-[#E7E2DA]'
+                  ? 'bg-[#2A0B0B] border border-[#D99B26]/45'
+                  : 'bg-[#FFFDF8] border border-[#E7DEC8]'
               }`}
             >
               <div>
@@ -668,7 +689,7 @@ export const VotingView: React.FC<VotingViewProps> = ({
                     isZh ? 'text-[#F9EEDB]' : 'text-[#1C1613]'
                   }`}
                 >
-                  {isZh ? '三、品鉴评语（选填）' : '3. Comentario de cata (opcional)'}
+                  {isZh ? '三、茶馆江湖评语（选填）' : '3. Lanza tu chisme o comentario de cata (opcional)'}
                 </label>
                 <textarea
                   id="tasting-note"
@@ -678,13 +699,13 @@ export const VotingView: React.FC<VotingViewProps> = ({
                   onChange={(e) => setNote(e.target.value)}
                   placeholder={
                     isZh
-                      ? '例如：第一款更湿润绵密，第二款表面海盐很点睛……'
-                      : 'Ej. El primero estaba más fundente y el segundo tenía un toque de sal genial...'
+                      ? '例如：第一款功力深厚堪比佛跳墙，第二款配壶上好铁观音简直绝配……'
+                      : 'Ej. El primero estaba bien melcochudo y el segundo merece una Malta bien fría...'
                   }
                   className={`w-full px-4 py-3 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-colors resize-none ${
                     isZh
-                      ? 'bg-[#1B0C0B] border-[#D99B26]/35 text-[#F9EEDB] placeholder:text-[#9C8461] focus:ring-[#E5B85C] focus:border-[#E5B85C]'
-                      : 'bg-[#FAF8F5] border-[#D8D0C5] text-[#1C1613] placeholder:text-[#9A8F86] focus:ring-[#7C3A1D] focus:border-[#7C3A1D]'
+                      ? 'bg-[#180505] border-[#D99B26]/40 text-[#F9EEDB] placeholder:text-[#9C8461] focus:ring-[#E5B85C] focus:border-[#E5B85C]'
+                      : 'bg-[#FFFBF2] border-[#DFD5BE] text-[#1C1613] placeholder:text-[#9A8F86] focus:ring-[#003893] focus:border-[#003893]'
                   }`}
                 />
               </div>
@@ -705,7 +726,7 @@ export const VotingView: React.FC<VotingViewProps> = ({
 
               <div
                 className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t ${
-                  isZh ? 'border-[#D99B26]/20' : 'border-[#F0ECE4]'
+                  isZh ? 'border-[#D99B26]/25' : 'border-[#EFE7D6]'
                 }`}
               >
                 <div
@@ -715,7 +736,7 @@ export const VotingView: React.FC<VotingViewProps> = ({
                       : 'font-mono tabular-nums text-[#5C524B]'
                   }`}
                 >
-                  {isZh ? '当前评分：' : 'Resumen actual: '}
+                  {isZh ? '当前账房算盘合计：' : 'Así va la vuelta: '}
                   {isZh ? '郑志斌' : 'Zhibin'}{' '}
                   <strong className={isZh ? 'text-[#F6DCA8]' : 'text-[#1C1613]'}>
                     {zhibinScore !== null
@@ -740,17 +761,17 @@ export const VotingView: React.FC<VotingViewProps> = ({
                   disabled={submitting}
                   className={`px-6 py-3 text-sm font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-60 ${
                     isZh
-                      ? 'text-[#1B0C0B] bg-[#E5B85C] hover:bg-[#D4A446] focus-visible:ring-[#E5B85C]'
-                      : 'text-white bg-[#7C3A1D] hover:bg-[#652E16] focus-visible:ring-[#7C3A1D]'
+                      ? 'text-[#180505] bg-[#E5B85C] hover:bg-[#D4A446] focus-visible:ring-[#E5B85C]'
+                      : 'text-white bg-[#003893] hover:bg-[#00296B] focus-visible:ring-[#003893]'
                   }`}
                 >
                   {submitting
                     ? isZh
-                      ? '正在提交……'
-                      : 'Guardando votación...'
+                      ? '飞鸽传书中……'
+                      : 'Guardando el beta...'
                     : isZh
-                      ? '提交我的评分'
-                      : 'Enviar mi votación'}
+                      ? '盖章呈递御批'
+                      : '¡Mandar mi voto, vale!'}
                 </button>
               </div>
             </div>

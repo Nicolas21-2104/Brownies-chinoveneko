@@ -22,6 +22,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { AdminStatisticsSection } from './AdminStatisticsSection';
 import type { AdminAnalyticsResponse, VoteRecord } from '../types/contest';
 
 const TOKEN_STORAGE_KEY = 'brownie_admin_token';
@@ -768,6 +769,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onGoToVote }) => {
                 </ResponsiveContainer>
               </div>
             </section>
+
+            {/* All Statistical Charts, Hypothesis & Winner Significance Tests */}
+            <AdminStatisticsSection analytics={analytics} />
 
             {/* Full Statistical Matrix */}
             <section className="bg-white border border-[#E7E2DA] rounded-xl overflow-hidden">

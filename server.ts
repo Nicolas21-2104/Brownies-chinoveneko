@@ -13,9 +13,60 @@ import {
   verifyAdminTokenFromHeader,
 } from './src/server/contestLogic.ts';
 
-const PORT = Number(process.env.PORT || 3000);
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'votes.json');
+
+function resolvePort(): number {
+  const args = process.argv.slice(2);
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg.startsWith('--port=')) {
+      const parsed = Number(arg.slice('--port='.length));
+      if (Number.isInteger(parsed) && parsed > 0 && parsed <= 65535) {
+        return parsed;
+      }
+    } else if ((arg === '--port' || arg === '-p') && args[i + 1]) {
+      const parsed = Number(args[i + 1]);
+      if (Number.isInteger(parsed) && parsed > 0 && parsed <= 65535) {
+        return parsed;
+      }
+    }
+  }
+
+  const envPort = Number(process.env.PORT);
+  if (process.env.NODE_ENV === 'production') {
+    if (Number.isInteger(envPort) && envPort > 0 && envPort <= 65535) {
+      return envPort;
+    }
+    return 3000;
+  }
+
+  // In development, AI Studio expects port 3000 while Cloud Run nginx holds PORT=8080.
+  if (
+    Number.isInteger(envPort) &&
+    envPort > 0 &&
+    envPort <= 65535 &&
+    envPort !== 8080
+  ) {
+    return envPort;
+  }
+  return 3000;
+}
+
+function resolveHost(): string {
+  const args = process.argv.slice(2);
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg.startsWith('--host=')) {
+      const host = arg.slice('--host='.length).trim();
+      if (host) return host;
+    } else if ((arg === '--host' || arg === '-H') && args[i + 1]) {
+      const host = args[i + 1].trim();
+      if (host) return host;
+    }
+  }
+  return '0.0.0.0';
+}
 
 function ensureDataFile(): void {
   if (!fs.existsSync(DATA_DIR)) {
@@ -153,6 +204,8 @@ async function startServer(): Promise<void> {
     res.json(buildAnalytics([]));
   });
 
+  const port = resolvePort();
+  const host = resolveHost();
   const httpServer = http.createServer(app);
 
   if (process.env.NODE_ENV !== 'production') {
@@ -160,7 +213,10 @@ async function startServer(): Promise<void> {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        ws: { server: httpServer },
+        hmr:
+          process.env.DISABLE_HMR === 'true'
+            ? false
+            : { server: httpServer },
       },
       appType: 'spa',
     });
@@ -173,8 +229,13 @@ async function startServer(): Promise<void> {
     });
   }
 
-  httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`Brownie contest server listening on http://0.0.0.0:${PORT}`);
+  httpServer.on('error', (err) => {
+    console.error(`HTTP server error on ${host}:${port}:`, err);
+    process.exit(1);
+  });
+
+  httpServer.listen(port, host, () => {
+    console.log(`Brownie contest server listening on http://${host}:${port}`);
   });
 }
 

@@ -45,10 +45,10 @@ export default function App() {
 
   useEffect(() => {
     const isZh = currentPath === '/' && language === 'zh';
-    document.documentElement.lang = isZh ? 'zh-CN' : 'es';
+    document.documentElement.lang = isZh ? 'zh-CN' : 'es-VE';
     document.title = isZh
-      ? '布朗尼品鉴大赛 — 郑志斌 对决 尼古拉斯·维列加斯'
-      : 'Concurso de Brownies — Zhibin Zheng vs. Nicolás Villegas';
+      ? '紫禁城御膳布朗尼比武大会 — 郑志斌 决战 尼古拉斯·维列加斯'
+      : 'Guerra Criolla de Brownies — Zhibin Zheng vs. Nicolás Villegas';
   }, [currentPath, language]);
 
   const navigate = (path: '/' | '/admin', hash?: string) => {
@@ -72,13 +72,16 @@ export default function App() {
   };
 
   const isZhPublic = currentPath === '/' && language === 'zh';
+  const isVePublic = currentPath === '/' && language === 'es';
 
   return (
     <div
       className={`min-h-screen flex flex-col transition-colors duration-300 ${
         isZhPublic
-          ? 'bg-[#1B0C0B] text-[#F9EEDB]'
-          : 'bg-[#FAF8F5] text-[#1C1613]'
+          ? 'bg-[#180505] text-[#F9EEDB]'
+          : isVePublic
+            ? 'bg-[#FFFBF2] text-[#1C1613]'
+            : 'bg-[#FAF8F5] text-[#1C1613]'
       }`}
     >
       <TopBar
@@ -98,8 +101,10 @@ export default function App() {
       <footer
         className={`border-t transition-colors duration-300 ${
           isZhPublic
-            ? 'border-[#D99B26]/25 bg-[#1B0C0B]'
-            : 'border-[#E7E2DA] bg-[#FAF8F5]'
+            ? 'border-[#D99B26]/30 bg-[#180505]'
+            : isVePublic
+              ? 'border-[#E7DEC8] bg-[#FFFBF2]'
+              : 'border-[#E7E2DA] bg-[#FAF8F5]'
         }`}
       >
         <div
@@ -109,8 +114,10 @@ export default function App() {
         >
           <span>
             {isZhPublic
-              ? '御膳布朗尼品鉴会 · 郑志斌 对决 尼古拉斯·维列加斯'
-              : 'Concurso de Brownies · Zhibin Zheng vs. Nicolás Villegas'}
+              ? '紫禁城御膳龙凤大酒楼 · 恭喜发财 · 郑志斌 决战 尼古拉斯·维列加斯'
+              : isVePublic
+                ? 'Rumba Criolla de Brownies · Cacao de Chuao y Malta bien fría · Zhibin Zheng vs. Nicolás Villegas'
+                : 'Concurso de Brownies · Zhibin Zheng vs. Nicolás Villegas'}
           </span>
           {currentPath === '/admin' && (
             <a
